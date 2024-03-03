@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='pygsm',
     version='0.1.0',
-    description='A gaussian version of PySM'
+    description='A gaussian version of PySM',
     license='MIT',
     packages=['pygsm'],
     author='Yiqi Liu',
