@@ -1,4 +1,5 @@
 import numpy as np
+import healpy as hp
 
 def planck_law(T, nu):
     # in RJ unit (not flux so no nu**3)
@@ -15,3 +16,8 @@ def trj2tcmb(freq):
 def tcmb2trj(freq):
     x = 6.62607015e-34 * freq * 1e9 / 2.725 / 1.380649e-23
     return x**2 * np.exp(x) / (np.exp(x) - 1)**2
+
+
+def smooth(maps, fwhm):
+    smoothed = hp.smoothing(maps, fwhm)
+    return smoothed
