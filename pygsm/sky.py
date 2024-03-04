@@ -106,7 +106,7 @@ class Sky:
         """ 
             generate dust cls given frequencies
         """
-        rj_cls0 = self.__sync_cls_ref * tcmb2trj(self.nu0_d)**2
+        rj_cls0 = self.__sync_cls_ref * tcmb2trj(self.nu0_s)**2
         scale = (nu / self.nu0_s)**(self.beta_s*2)
         rj_cls = np.tile(rj_cls0, (nu.shape[0], 1)).reshape(*nu.shape, *rj_cls0.shape)
         rj_cls *= scale[:, None, None]
@@ -114,7 +114,7 @@ class Sky:
         
     def get_sync_maps(self, nu:np.ndarray):
         """ generate dust maps given frequencies """
-        rj_map0 = self.__sync_map_ref * tcmb2trj(self.nu0_d)
+        rj_map0 = self.__sync_map_ref * tcmb2trj(self.nu0_s)
         scale = (nu / self.nu0_s)**self.beta_s
         rj_map = np.tile(rj_map0, (nu.shape[0], 1)).reshape(*nu.shape, *rj_map0.shape)
         rj_map *= scale[:, None, None]
