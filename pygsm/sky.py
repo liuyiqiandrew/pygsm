@@ -1,7 +1,8 @@
 import numpy as np
 import healpy as hp
+import os
 
-from util import *
+from .util import *
 
 class Sky:
     def __init__(self, nside=256) -> None:
@@ -12,7 +13,7 @@ class Sky:
         tmp = np.copy(self.cl2dl)
         tmp[0] = 1
         self.dl2cl = 1 / tmp
-        self.dl2cl[0] = 0.
+        self.dl2cl[[0, 1]] = 0.
 
         self.cmb_cls = None
         self.cmb_maps = None
@@ -36,9 +37,11 @@ class Sky:
                     ) -> None:
         """ generate dust cls at nu0 """
         cl0 = np.zeros_like(self.ell)
-        dl_ee = amp_d_bb * (self.ell / 80.)**alpha_d_ee * self.dl2cl
-        dl_bb = amp_d_ee * (self.ell / 80.)**alpha_d_bb * self.dl2cl
-        self.__dust_cls_ref = np.array([cl0, dl_ee, dl_bb, cl0]) #TODO: add temperature
+        tmp_ell = self.ell
+        tmp_ell[0] = 1.
+        cl_ee = amp_d_ee * (tmp_ell / 80.)**alpha_d_ee * self.dl2cl
+        cl_bb = amp_d_bb * (tmp_ell / 80.)**alpha_d_bb * self.dl2cl
+        self.__dust_cls_ref = np.array([cl0, cl_ee, cl_bb, cl0]) #TODO: add temperature
         self.__dust_map_ref = hp.synfast(self.__dust_cls_ref, self.nside, new=True)
 
     def init_dust(self,
@@ -84,21 +87,23 @@ class Sky:
                     ):
         """ generate dust cls at nu0 """
         cl0 = np.zeros_like(self.ell)
-        dl_ee = amp_s_bb * (self.ell / 80.)**alpha_s_ee * self.dl2cl
-        dl_bb = amp_s_ee * (self.ell / 80.)**alpha_s_bb * self.dl2cl
-        self.__sync_cls_ref = np.array([cl0, dl_ee, dl_bb, cl0]) #TODO: add temperature
+        tmp_ell = self.ell
+        tmp_ell[0] = 1.
+        cl_ee = amp_s_ee * (tmp_ell / 80.)**alpha_s_ee * self.dl2cl
+        cl_bb = amp_s_bb * (tmp_ell / 80.)**alpha_s_bb * self.dl2cl
+        self.__sync_cls_ref = np.array([cl0, cl_ee, cl_bb, cl0]) #TODO: add temperature
         self.__sync_map_ref = hp.synfast(self.__sync_cls_ref, self.nside, new=True)
         
     def init_sync(self,
-                amp_s_ee=56., 
-                amp_s_bb=28., 
-                alpha_s_ee=-0.32, 
-                alpha_s_bb=-0.16,
-                beta_s=1.54,
+                amp_s_ee=9., 
+                amp_s_bb=1.6, 
+                alpha_s_ee=-0.7, 
+                alpha_s_bb=-0.93,
+                beta_s=-3,
                 nu0_s=23.
                 ):
-        self.__gen_sync_ref(amp_d_ee=amp_s_ee, amp_d_bb=amp_s_bb, alpha_d_ee=alpha_s_ee,
-                        alpha_d_bb=alpha_s_bb)
+        self.__gen_sync_ref(amp_s_ee=amp_s_ee, amp_s_bb=amp_s_bb, alpha_s_ee=alpha_s_ee,
+                        alpha_s_bb=alpha_s_bb)
         self.beta_s = beta_s
         self.nu0_s = nu0_s
 
@@ -121,13 +126,14 @@ class Sky:
         return rj_map * trj2tcmb(nu)[:, None, None]
     
     def init_cmb(self, A_lens=1., r_tensor=0.):
-        camb_lens_dl = np.loadtxt("./data/cmb/camb_lens_nobb.dat")
+        cur_dir = os.path.abspath(os.path.dirname(__file__))
+        camb_lens_dl = np.loadtxt(cur_dir + "/data/cmb_spec/camb_lens_nobb.dat")
         camb_lens_dl = np.concatenate((np.zeros((1,5)), camb_lens_dl), axis=0)
-        camb_r1_dl = np.loadtxt("./data/cmb/camb_lens_r1.dat")
+        camb_r1_dl = np.loadtxt(cur_dir + "/data/cmb_spec/camb_lens_r1.dat")
         camb_r1_dl = np.concatenate((np.zeros((1,5)), camb_r1_dl), axis=0)
         camb_lens_dl = camb_lens_dl[self.ell, 1:].T
         camb_r1_dl = camb_r1_dl[self.ell, 1:].T
-        self.cmb_cls = A_lens * camb_lens_dl + r_tensor * (camb_r1_dl - camb_lens_dl)
+        self.cmb_cls = (A_lens * camb_lens_dl + r_tensor * (camb_r1_dl - camb_lens_dl)) * self.dl2cl
         self.cmb_maps = hp.synfast(self.cmb_cls, self.nside, new=True)
 
     def get_cmb_cls(self):

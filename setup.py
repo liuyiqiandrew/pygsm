@@ -6,6 +6,7 @@ setup(
     description='A gaussian version of PySM',
     license='MIT',
     packages=['pygsm'],
+    install_requires=['numpy', 'healpy'],
     author='Yiqi Liu',
     author_email='andrew.liu@princeton.edu',
     url='http://github.com/liuyiqiandrew/pygsm'
