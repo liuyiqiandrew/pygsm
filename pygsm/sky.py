@@ -5,7 +5,19 @@ import os
 from .util import *
 
 class Sky:
-    def __init__(self, nside=256) -> None:
+    """
+        PyGSM Sky object
+    """
+    def __init__(self, nside=256, nu=None) -> None:
+        """
+            Constructor for sky
+            ==========
+            Parameters:
+                nside: int
+                    nside of map, default 256
+                nu: np.ndarray
+                    array of frequencies (in GHz)
+        """
         self.nside:int = nside
         self.lmax:int = nside * 3 - 1
         self.ell:int = np.arange(self.lmax + 1)
@@ -15,11 +27,13 @@ class Sky:
         self.dl2cl:np.ndarray = 1 / tmp
         self.dl2cl[[0, 1]] = 0.
 
+        self.__nu:np.ndarray = nu
+
         self.cmb_cls:np.ndarray = None
         self.cmb_maps:np.ndarray = None
         
-        self.noise_dtemp:float = None
-        self.noise_dpol:float = None
+        self.noise_dtemp:np.ndarray = None
+        self.noise_dpol:np.ndarray = None
 
         self.temp_d:float = None
         self.beta_d:float = None
@@ -31,6 +45,15 @@ class Sky:
         self.__sync_cls_ref:np.ndarray = None 
         self.__sync_map_ref:np.ndarray = None
         
+    def set_freqs(self, nu:np.ndarray):
+        """
+            reset frequency arrays
+            ==========
+            Parameters:
+                nu: np.ndarray
+                    array of frequencies (in GHz)
+        """
+        self.__nu = nu
 
     def __gen_dust_ref(self, 
                     amp_d_ee=56., 
@@ -38,7 +61,9 @@ class Sky:
                     alpha_d_ee=-0.32, 
                     alpha_d_bb=-0.16,
                     ) -> None:
-        """ generate dust cls at nu0 """
+        """ 
+            Add dust component
+        """
         cl0 = np.zeros_like(self.ell)
         tmp_ell = self.ell
         tmp_ell[0] = 1.
@@ -62,10 +87,12 @@ class Sky:
         self.beta_d = beta_d
         self.nu0_d = nu0_d
 
-    def get_dust_theory_cls(self, nu:np.ndarray):
+    def get_dust_theory_cls(self, nu:np.ndarray=None):
         """ 
             generate dust cls given frequencies
         """
+        if nu is None:
+            nu = self.__nu
         rj_cls0 = self.__dust_cls_ref * tcmb2trj(self.nu0_d)**2
         scale = ((nu / self.nu0_d)**self.beta_d * \
             (planck_law(self.temp_d, nu) / planck_law(self.temp_d, self.nu0_d)))**2
@@ -73,7 +100,9 @@ class Sky:
         rj_cls *= scale[:, None, None]
         return rj_cls * (trj2tcmb(nu)**2)[:, None, None] 
         
-    def get_dust_maps(self, nu:np.ndarray):
+    def get_dust_maps(self, nu:np.ndarray=None):
+        if nu is None:
+            nu = self.__nu
         """ generate dust maps given frequencies """
         rj_map0 = self.__dust_map_ref * tcmb2trj(self.nu0_d)
         scale = (nu / self.nu0_d)**self.beta_d * \
@@ -110,18 +139,22 @@ class Sky:
         self.beta_s = beta_s
         self.nu0_s = nu0_s
 
-    def get_sync_theory_cls(self, nu:np.ndarray):
+    def get_sync_theory_cls(self, nu:np.ndarray=None):
         """ 
             generate dust cls given frequencies
         """
+        if nu is None:
+            nu = self.__nu
         rj_cls0 = self.__sync_cls_ref * tcmb2trj(self.nu0_s)**2
         scale = (nu / self.nu0_s)**(self.beta_s*2)
         rj_cls = np.tile(rj_cls0, (nu.shape[0], 1)).reshape(*nu.shape, *rj_cls0.shape)
         rj_cls *= scale[:, None, None]
         return rj_cls * (trj2tcmb(nu)**2)[:, None, None] 
         
-    def get_sync_maps(self, nu:np.ndarray):
+    def get_sync_maps(self, nu:np.ndarray=None):
         """ generate dust maps given frequencies """
+        if nu is None:
+            nu = self.__nu
         rj_map0 = self.__sync_map_ref * tcmb2trj(self.nu0_s)
         scale = (nu / self.nu0_s)**self.beta_s
         rj_map = np.tile(rj_map0, (nu.shape[0], 1)).reshape(*nu.shape, *rj_map0.shape)
@@ -145,13 +178,27 @@ class Sky:
     def get_cmb_maps(self):
         return self.cmb_maps
 
-    def init_white_noise(self, dt, dp):
+    def init_white_noise(self, dt=np.array([100.]), dp=np.array([100.])):
         self.noise_dtemp = dt
         self.noise_dpol = dp
 
     def get_white_noise_maps(self):
         pix_res = hp.nside2resol(self.nside, True)
         npix = hp.nside2npix(self.nside)
-        t_n = np.random.randn(npix) * self.noise_dtemp / pix_res
-        t_p = np.random.randn(2, npix) * self.noise_dpol / pix_res
-        return np.concatenate((t_n[None, :], t_p), axis=1)
+        t_n = self.noise_dtemp[:, None] / pix_res \
+            * np.random.randn(self.noise_dtemp.shape[0], npix)
+        t_p = self.noise_dpol[:, None] / pix_res \
+            * np.random.randn(2, self.noise_dtemp.shape[0], npix)
+        noise = np.concatenate((t_n[None, :], t_p), axis=0)
+        return np.swapaxes(noise, 0, 1)
+    
+    def pixwin(self):
+        return hp.pixwin(self.nside, pol=True)
+    
+    def gauss_beam(self, fwhm):
+        fwhm_rad = fwhm / 60 / 180 * np.pi
+        return hp.gauss_beam(fwhm=fwhm_rad, lmax=self.lmax, pol=True)
+    
+    def smooth(self, maps, fwhm):
+        fwhm_rad = fwhm / 60 / 180 * np.pi
+        return hp.smoothing(maps, fwhm=fwhm_rad)
