@@ -323,7 +323,3 @@ class Sky:
         """
         fwhm_rad = fwhm / 60 / 180 * np.pi
         return hp.gauss_beam(fwhm=fwhm_rad, lmax=self.lmax, pol=True)
-    
-    def smooth(self, maps, fwhm):
-        fwhm_rad = fwhm / 60 / 180 * np.pi
-        return hp.smoothing(maps, fwhm=fwhm_rad)
