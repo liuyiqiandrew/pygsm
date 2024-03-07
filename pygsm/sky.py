@@ -14,7 +14,7 @@ class Sky:
             ==========
             Parameters:
                 nside: int
-                    nside of map, default 256
+                    nside of map, Default 256
                 nu: np.ndarray
                     array of frequencies (in GHz)
         """
@@ -61,9 +61,7 @@ class Sky:
                     alpha_d_ee=-0.32, 
                     alpha_d_bb=-0.16,
                     ) -> None:
-        """ 
-            Add dust component
-        """
+        """ Generate dust reference cls and maps at nu0 """
         cl0 = np.zeros_like(self.ell)
         tmp_ell = self.ell
         tmp_ell[0] = 1.
@@ -79,8 +77,31 @@ class Sky:
                 alpha_d_bb=-0.16,
                 temp_d=19.6,
                 beta_d=1.54,
-                nu0_d=353.
-                ) -> None:
+                nu0_d=353.,
+                re_init=False) -> None:
+        """
+            Initialize / regenerated dust
+            ==========
+            Parameters:
+                amp_d_ee: float 
+                    Dust EE amplitude in CMB unit, default 56.
+                amp_d_bb: float
+                    Dust BB amplitude in CMB unit, default 28.
+                alpha_d_ee: float
+                    Dust EE Angular power spectral index, default -0.32.
+                alpha_d_bb: float
+                    Dust BB Angular power spectral index, default -0.16.
+                temp_d: float
+                    Dust temperature, dsfault 19.6
+                beta_d: float
+                    Dust frequency spectral index, default 1.54
+                nu0_d: float
+                    Dust reference frequency, default 353.
+                re_init: bool
+                    Regenerate dust when function is called, dafault False
+        """
+        if not re_init and self.__dust_map_ref is not None:
+            return
         self.__gen_dust_ref(amp_d_ee=amp_d_ee, amp_d_bb=amp_d_bb, alpha_d_ee=alpha_d_ee,
                         alpha_d_bb=alpha_d_bb)
         self.temp_d = temp_d
@@ -90,6 +111,15 @@ class Sky:
     def get_dust_theory_cls(self, nu:np.ndarray=None):
         """ 
             generate dust cls given frequencies
+            ==========
+            Inputs:
+                nu: np.ndarray
+                    Array of frequencies to generate the power spectra cl. If None, use the 
+                    frequency passed into the constructor. Default None.
+            ==========
+            Returns:
+                cls: np.ndarray
+                    Array of dust cls of shape (Nfreq, 4, Lmax + 1)
         """
         if nu is None:
             nu = self.__nu
@@ -103,7 +133,18 @@ class Sky:
     def get_dust_maps(self, nu:np.ndarray=None):
         if nu is None:
             nu = self.__nu
-        """ generate dust maps given frequencies """
+        """ 
+            generate dust maps given frequencies 
+            ==========
+            Inputs:
+                nu: np.ndarray
+                    Array of frequencies to generate the dust maps. If None, use the 
+                    frequency passed into the constructor, default None.
+            ==========
+            Returns:
+                maps: np.ndarray
+                    Array of dust maps of shape (Nfreq, 3, Npix)
+        """
         rj_map0 = self.__dust_map_ref * tcmb2trj(self.nu0_d)
         scale = (nu / self.nu0_d)**self.beta_d * \
             (planck_law(self.temp_d, nu) / planck_law(self.temp_d, self.nu0_d))
@@ -115,9 +156,8 @@ class Sky:
                     amp_s_ee=56., 
                     amp_s_bb=28., 
                     alpha_s_ee=-0.32, 
-                    alpha_s_bb=-0.16,
-                    ) -> None:
-        """ generate dust cls at nu0 """
+                    alpha_s_bb=-0.16) -> None:
+        """ generate sync cls and maps at nu0 """
         cl0 = np.zeros_like(self.ell)
         tmp_ell = self.ell
         tmp_ell[0] = 1.
@@ -132,8 +172,30 @@ class Sky:
                 alpha_s_ee=-0.7, 
                 alpha_s_bb=-0.93,
                 beta_s=-3,
-                nu0_s=23.
+                nu0_s=23.,
+                re_init=False
                 ) -> None:
+        """
+            Initialize / regenerated synchrotron
+            ==========
+            Parameters:
+                amp_s_ee: float 
+                    Synchrotron EE amplitude in CMB unit, default 56.
+                amp_s_bb: float
+                    Synchrotron BB amplitude in CMB unit, default 28.
+                alpha_s_ee: float
+                    Synchrotron EE Angular power spectral index, default -0.32.
+                alpha_s_bb: float
+                    Synchrotron BB Angular power spectral index, default -0.16.
+                beta_s: float
+                    Synchrotron frequency spectral index, default -3.
+                nu0_s: float
+                    Synchrotron reference frequency, default 23.
+                re_init: bool
+                    Regenerate synchrotron when function is called, default False.
+        """
+        if not re_init and self.__sync_map_ref is not None:
+            return
         self.__gen_sync_ref(amp_s_ee=amp_s_ee, amp_s_bb=amp_s_bb, alpha_s_ee=alpha_s_ee,
                         alpha_s_bb=alpha_s_bb)
         self.beta_s = beta_s
@@ -142,6 +204,15 @@ class Sky:
     def get_sync_theory_cls(self, nu:np.ndarray=None):
         """ 
             generate dust cls given frequencies
+            ==========
+            Inputs:
+                nu: np.ndarray
+                    Array of frequencies to generate the power spectra cl. If None, use the 
+                    frequency passed into the constructor, default None.
+            ==========
+            Returns:
+                cls: np.ndarray
+                    Array of synchrotron cls of shape (Nfreq, 4, Lmax + 1)
         """
         if nu is None:
             nu = self.__nu
@@ -152,7 +223,18 @@ class Sky:
         return rj_cls * (trj2tcmb(nu)**2)[:, None, None] 
         
     def get_sync_maps(self, nu:np.ndarray=None):
-        """ generate dust maps given frequencies """
+        """ 
+            Generate synchrotron maps given frequencies 
+            ==========
+            Inputs:
+                nu: np.ndarray
+                    Array of frequencies to generate the dust maps. If None, use the 
+                    frequency passed into the constructor, default None.
+            ==========
+            Returns:
+                maps: np.ndarray
+                    Array of dust maps of shape (Nfreq, 3, Npix)
+        """
         if nu is None:
             nu = self.__nu
         rj_map0 = self.__sync_map_ref * tcmb2trj(self.nu0_s)
@@ -161,7 +243,20 @@ class Sky:
         rj_map *= scale[:, None, None]
         return rj_map * trj2tcmb(nu)[:, None, None]
     
-    def init_cmb(self, A_lens=1., r_tensor=0.):
+    def init_cmb(self, A_lens=1., r_tensor=0., re_init=False):
+        """
+            Initialize / regenerated CMB
+            ==========
+            Parameters:
+                A_lens: float 
+                    Lensing amplitude default 1.
+                r_tensor: float
+                    Tensor r, default 0.
+                re_init: bool
+                    Regenerate cmb maps when function is called, default False.
+        """
+        if not re_init and self.cmb_maps is not None:
+            return
         cur_dir = os.path.abspath(os.path.dirname(__file__))
         camb_lens_dl = np.loadtxt(cur_dir + "/data/cmb_spec/camb_lens_nobb.dat")
         camb_lens_dl = np.concatenate((np.zeros((1,5)), camb_lens_dl), axis=0)
@@ -173,16 +268,29 @@ class Sky:
         self.cmb_maps = hp.synfast(self.cmb_cls, self.nside, new=True)
 
     def get_cmb_theory_cls(self):
+        """ Get CMB cls after calling init_cmb """
         return self.cmb_cls
     
     def get_cmb_maps(self):
+        """ Get CMB maps after calling init_cmb """
         return self.cmb_maps
 
-    def init_white_noise(self, dt=np.array([100.]), dp=np.array([100.])):
+    def init_white_noise(self, dt:np.ndarray=np.array([100.]), dp:np.ndarray=np.array([100.])):
+        """ 
+            Initialize parameters for generating white noise
+            ==========
+            dt: np.ndarray
+                array of T sensitivity, in uK-arcmin, default np.array([100])
+            dp: np.ndarray
+                array of QU sensitivity, in uK-arcmin, there may be a need to divide by 
+                $\sqrt{2}$ if polarization sensitivity is given,
+                default np.array([100])
+        """
         self.noise_dtemp = dt
         self.noise_dpol = dp
 
     def get_white_noise_maps(self):
+        """ Generate a realization of white noise with initalized sensitivities """
         pix_res = hp.nside2resol(self.nside, True)
         npix = hp.nside2npix(self.nside)
         t_n = self.noise_dtemp[:, None] / pix_res \
@@ -193,9 +301,26 @@ class Sky:
         return np.swapaxes(noise, 0, 1)
     
     def pixwin(self):
+        """ 
+            Get pixel window function for the given nside
+            ==========
+            Returns:
+                pixwin: tuple
+                    Tuple of pixel window function (pw_T, pw_P) from healpy
+        """
         return hp.pixwin(self.nside, pol=True)
     
     def gauss_beam(self, fwhm):
+        """
+            Get the gaussian beam window function given fwhm
+            ==========
+            Inputs:
+                fwhm: float
+                    fwhm of beam in arcmin
+            ==========
+            Returns: np.ndarray
+                Gaussian beam window function from healpy.
+        """
         fwhm_rad = fwhm / 60 / 180 * np.pi
         return hp.gauss_beam(fwhm=fwhm_rad, lmax=self.lmax, pol=True)
     
