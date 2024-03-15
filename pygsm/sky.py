@@ -280,12 +280,14 @@ class Sky:
             Initialize parameters for generating white noise
             ==========
             dt: np.ndarray
-                array of T sensitivity, in uK-arcmin, default np.array([100])
+                1D array of T sensitivity, in uK-arcmin, default np.array([100])
             dp: np.ndarray
-                array of QU sensitivity, in uK-arcmin, there may be a need to divide by 
+                1D array of QU sensitivity, in uK-arcmin, there may be a need to divide by 
                 $\sqrt{2}$ if polarization sensitivity is given,
                 default np.array([100])
         """
+        if len(dt) != len(dp):
+            raise ValueError("dt and dp should have the same length")
         self.noise_dtemp = dt
         self.noise_dpol = dp
 
