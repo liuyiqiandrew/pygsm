@@ -24,6 +24,7 @@ The package only support polarization (Q and U) for synchrotron and dust. Stoke 
 (at the moment).
 
 ## Warning on unit convention
+
 Everything should be in `CMB uK` unit (Double check your synchrotron / dust amplitude especially).
 
 ## Contact
