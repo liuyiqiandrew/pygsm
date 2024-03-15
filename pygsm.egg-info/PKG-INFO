@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: pygsm
+Version: 0.1.0
+Summary: A gaussian version of PySM
+Home-page: http://github.com/liuyiqiandrew/pygsm
+Author: Yiqi Liu
+Author-email: andrew.liu@princeton.edu
+License: MIT
+License-File: LICENSE.txt
+Requires-Dist: numpy
+Requires-Dist: healpy

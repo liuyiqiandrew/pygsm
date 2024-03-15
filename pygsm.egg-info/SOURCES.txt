@@ -1,0 +1,14 @@
+LICENSE.txt
+MANIFEST.in
+README.md
+setup.py
+pygsm/__init__.py
+pygsm/sky.py
+pygsm/util.py
+pygsm.egg-info/PKG-INFO
+pygsm.egg-info/SOURCES.txt
+pygsm.egg-info/dependency_links.txt
+pygsm.egg-info/requires.txt
+pygsm.egg-info/top_level.txt
+pygsm/data/cmb_spec/camb_lens_nobb.dat
+pygsm/data/cmb_spec/camb_lens_r1.dat

@@ -5,7 +5,7 @@ setup(
     version='0.1.0',
     description='A gaussian version of PySM',
     license='MIT',
-    packages=['pygsm'],
+    packages=['pygsm', 'pygsm.data.cmb_spec'],
     include_package_data=True,
     install_requires=['numpy', 'healpy'],
     author='Yiqi Liu',
