@@ -8,7 +8,7 @@ class Sky:
     """
         PyGSM Sky object
     """
-    def __init__(self, nside=256, nu=None) -> None:
+    def __init__(self, nside:int=256, nu:np.ndarray=None) -> None:
         """
             Constructor for sky
             ==========
@@ -17,6 +17,10 @@ class Sky:
                     nside of map, Default 256
                 nu: np.ndarray
                     array of frequencies (in GHz)
+            ==========
+            Returns:
+                sky: pygsm.Sky
+                    sky object for all further operation
         """
         self.nside:int = nside
         self.lmax:int = nside * 3 - 1
@@ -45,7 +49,7 @@ class Sky:
         self.__sync_cls_ref:np.ndarray = None 
         self.__sync_map_ref:np.ndarray = None
         
-    def set_freqs(self, nu:np.ndarray):
+    def set_freqs(self, nu:np.ndarray) -> None:
         """
             reset frequency arrays
             ==========
@@ -71,13 +75,13 @@ class Sky:
         self.__dust_map_ref = hp.synfast(self.__dust_cls_ref, self.nside, new=True)
 
     def init_dust(self,
-                amp_d_ee=56., 
-                amp_d_bb=28., 
-                alpha_d_ee=-0.32, 
-                alpha_d_bb=-0.16,
-                temp_d=19.6,
-                beta_d=1.54,
-                nu0_d=353.,
+                amp_d_ee:float=56., 
+                amp_d_bb:float=28., 
+                alpha_d_ee:float=-0.32, 
+                alpha_d_bb:float=-0.16,
+                temp_d:float=19.6,
+                beta_d:float=1.54,
+                nu0_d:float=353.,
                 re_init=False) -> None:
         """
             Initialize / regenerated dust
@@ -130,9 +134,7 @@ class Sky:
         rj_cls *= scale[:, None, None]
         return rj_cls * (trj2tcmb(nu)**2)[:, None, None] 
         
-    def get_dust_maps(self, nu:np.ndarray=None):
-        if nu is None:
-            nu = self.__nu
+    def get_dust_maps(self, nu:np.ndarray=None) -> np.ndarray:
         """ 
             generate dust maps given frequencies 
             ==========
@@ -145,6 +147,8 @@ class Sky:
                 maps: np.ndarray
                     Array of dust maps of shape (Nfreq, 3, Npix)
         """
+        if nu is None:
+            nu = self.__nu
         rj_map0 = self.__dust_map_ref * tcmb2trj(self.nu0_d)
         scale = (nu / self.nu0_d)**self.beta_d * \
             (planck_law(self.temp_d, nu) / planck_law(self.temp_d, self.nu0_d))
@@ -167,13 +171,13 @@ class Sky:
         self.__sync_map_ref = hp.synfast(self.__sync_cls_ref, self.nside, new=True)
         
     def init_sync(self,
-                amp_s_ee=9., 
-                amp_s_bb=1.6, 
-                alpha_s_ee=-0.7, 
-                alpha_s_bb=-0.93,
-                beta_s=-3,
-                nu0_s=23.,
-                re_init=False
+                amp_s_ee:float=9., 
+                amp_s_bb:float=1.6, 
+                alpha_s_ee:float=-0.7, 
+                alpha_s_bb:float=-0.93,
+                beta_s:float=-3,
+                nu0_s:float=23.,
+                re_init:bool=False
                 ) -> None:
         """
             Initialize / regenerated synchrotron
@@ -201,7 +205,7 @@ class Sky:
         self.beta_s = beta_s
         self.nu0_s = nu0_s
 
-    def get_sync_theory_cls(self, nu:np.ndarray=None):
+    def get_sync_theory_cls(self, nu:np.ndarray=None) -> np.ndarray:
         """ 
             generate dust cls given frequencies
             ==========
@@ -222,7 +226,7 @@ class Sky:
         rj_cls *= scale[:, None, None]
         return rj_cls * (trj2tcmb(nu)**2)[:, None, None] 
         
-    def get_sync_maps(self, nu:np.ndarray=None):
+    def get_sync_maps(self, nu:np.ndarray=None) -> np.ndarray:
         """ 
             Generate synchrotron maps given frequencies 
             ==========
@@ -243,7 +247,7 @@ class Sky:
         rj_map *= scale[:, None, None]
         return rj_map * trj2tcmb(nu)[:, None, None]
     
-    def init_cmb(self, A_lens=1., r_tensor=0., re_init=False):
+    def init_cmb(self, A_lens=1., r_tensor=0., re_init=False) -> None:
         """
             Initialize / regenerated CMB
             ==========
@@ -267,15 +271,15 @@ class Sky:
         self.cmb_cls = (A_lens * camb_lens_dl + r_tensor * (camb_r1_dl - camb_lens_dl)) * self.dl2cl
         self.cmb_maps = hp.synfast(self.cmb_cls, self.nside, new=True)
 
-    def get_cmb_theory_cls(self):
+    def get_cmb_theory_cls(self) -> np.ndarray:
         """ Get CMB cls after calling init_cmb """
         return self.cmb_cls
     
-    def get_cmb_maps(self):
+    def get_cmb_maps(self) -> np.ndarray:
         """ Get CMB maps after calling init_cmb """
         return self.cmb_maps
 
-    def init_white_noise(self, dt:np.ndarray=np.array([100.]), dp:np.ndarray=np.array([100.])):
+    def init_white_noise(self, dt:np.ndarray=np.array([100.]), dp:np.ndarray=np.array([100.])) -> None:
         """ 
             Initialize parameters for generating white noise
             ==========
@@ -291,7 +295,7 @@ class Sky:
         self.noise_dtemp = dt
         self.noise_dpol = dp
 
-    def get_white_noise_maps(self):
+    def get_white_noise_maps(self) -> np.ndarray:
         """ Generate a realization of white noise with initalized sensitivities """
         pix_res = hp.nside2resol(self.nside, True)
         npix = hp.nside2npix(self.nside)
