@@ -20,9 +20,11 @@ See example directory for a quick walk through for the package.
 
 Use `re_init` option if you want to recreate spectra / maps for CMB, dust, and synchrotron.
 
-The package only support polarization (Q and U) for synchrotron and dust, no temperature T (yet?).
+The package only support polarization (Q and U) for synchrotron and dust. Stoke I is not implemented
+(at the moment).
 
-Everything should be in `CMB uK` unit (I know unit is a pain, but if you keep your parameter inputs this 
-way, the package will honor the consistency).
+## Warning on unit convention
+Everything should be in `CMB uK` unit (Double check your synchrotron / dust amplitude especially).
 
+## Contact
 Email Andrew Liu (andrew.liu@princeton.edu) if you have any questions
