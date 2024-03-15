@@ -1,12 +1,20 @@
-# pygsm
+Python Gaussian Sky Model
+----------------------------
+`PyGSM` is a gaussian supplement for the Python Sky Model (PySM3) package.
 
-This is the gaussian version for the Python Sky Model package.
+## Dependencies
+- numpy
+- healpy
 
-Install the package my clone this package and run:
+## Installation
+
+Install the `PyGSM` clone this repo and run:
 
 `
 python setup.py install
 `
+
+## Usage
 
 See example directory for a quick walk through for the package.
 
