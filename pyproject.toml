@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygsm"
+version = "0.1.0"
+description = "A gaussian version of PySM"
+license = "MIT"
+authors = [
+    {name = "Yiqi Liu", email = "andrew.liu@princeton.edu"},
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "healpy",
+]
+
+[project.urls]
+Repository = "http://github.com/liuyiqiandrew/pygsm"
+
+[tool.setuptools.packages.find]
+include = ["pygsm*"]
+
+[tool.setuptools.package-data]
+"pygsm" = ["data/cmb_spec/*"]
